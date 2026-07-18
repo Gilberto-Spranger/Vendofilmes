@@ -1,0 +1,6 @@
+{
+  "name": "VendoFilmes",
+  "description": "Plataforma premium de streaming de filmes, séries, documentários e conteúdos exclusivos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
