@@ -41,7 +41,7 @@ export default async function MinhaListaPage() {
         <div className="flex flex-col items-center justify-center py-20 text-center flex-1">
           <div className="text-6xl mb-4">⭐</div>
           <h2 className="text-2xl font-bold text-white mb-2">Sua lista está vazia</h2>
-          <p className="text-brand-text-muted max-w-md">Navegue pelo catálogo e clique em "+" para adicionar títulos à sua lista.</p>
+          <p className="text-brand-text-muted max-w-md">Navegue pelo catálogo e clique em &quot;+&quot; para adicionar títulos à sua lista.</p>
         </div>
       )}
     </div>

@@ -44,7 +44,7 @@ export default function SearchResults() {
     <div className="space-y-8 w-full">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-white">Resultados da busca</h1>
-        <p className="text-brand-text-muted mt-2">Buscando por: "{q}"</p>
+        <p className="text-brand-text-muted mt-2">Buscando por: &quot;{q}&quot;</p>
       </div>
 
       {results.length > 0 ? (
