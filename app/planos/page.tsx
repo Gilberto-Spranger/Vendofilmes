@@ -1,8 +1,11 @@
 'use client';
 import { CreditCard, CheckCircle2, Zap, Shield, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useState } from 'react';
 
 export default function PlanosPage() {
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+
   const plans = [
     {
       id: 'basic',
@@ -12,8 +15,9 @@ export default function PlanosPage() {
       features: ['Qualidade HD', 'Assista em 1 tela', 'Com anúncios'],
       popular: false,
       color: 'from-gray-800 to-black',
-      buttonText: 'Alterar para Básico',
+      buttonText: 'Assinar Básico',
       isCurrent: false,
+      priceId: 'price_mock_basic',
     },
     {
       id: 'premium',
@@ -23,8 +27,9 @@ export default function PlanosPage() {
       features: ['Qualidade 4K Ultra HD', 'Assista em 4 telas', 'Sem anúncios', 'Downloads ilimitados', 'Acesso antecipado'],
       popular: true,
       color: 'from-brand-red/80 to-brand-red/20',
-      buttonText: 'Plano Atual',
-      isCurrent: true,
+      buttonText: 'Assinar Premium',
+      isCurrent: false,
+      priceId: 'price_mock_premium',
     },
     {
       id: 'family',
@@ -34,10 +39,38 @@ export default function PlanosPage() {
       features: ['Qualidade 4K Ultra HD', 'Assista em 6 telas', 'Perfis Infantis dedicados', 'Sem anúncios', 'Downloads ilimitados'],
       popular: false,
       color: 'from-purple-900/80 to-purple-900/20',
-      buttonText: 'Mudar para Família',
+      buttonText: 'Assinar Família',
       isCurrent: false,
+      priceId: 'price_mock_family',
     }
   ];
+
+  const handleSubscribe = async (plan: any) => {
+    setLoadingPlanId(plan.id);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          priceId: plan.priceId, 
+          isSubscription: true,
+          amount: parseFloat(plan.price.replace(',', '.')),
+          name: `Plano ${plan.name}`
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Erro ao processar o pagamento.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao processar o pagamento.');
+    } finally {
+      setLoadingPlanId(null);
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col px-4 lg:px-8 py-8 relative w-full min-h-[calc(100vh-80px)]">
@@ -81,13 +114,15 @@ export default function PlanosPage() {
               </ul>
               
               <button 
-                className={`w-full py-4 rounded-xl font-black transition-all ${
+                onClick={() => handleSubscribe(plan)}
+                disabled={loadingPlanId === plan.id}
+                className={`w-full py-4 rounded-xl font-black transition-all flex items-center justify-center gap-2 ${
                   plan.isCurrent 
                   ? 'bg-white/10 text-white border border-white/20 cursor-default' 
                   : 'bg-white text-black hover:bg-gray-200 shadow-xl'
                 }`}
               >
-                {plan.buttonText}
+                {loadingPlanId === plan.id ? 'Redirecionando...' : plan.buttonText}
               </button>
             </motion.div>
           ))}

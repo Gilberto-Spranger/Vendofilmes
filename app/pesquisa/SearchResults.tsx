@@ -1,21 +1,44 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { movieCategories } from '@/lib/data';
 import { Movie } from '@/types';
 import MovieCard from '@/components/MovieCard';
+import { Loader2 } from 'lucide-react';
 
 export default function SearchResults() {
   const searchParams = useSearchParams();
   const q = searchParams.get('q') || '';
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const allMovies = Object.values(movieCategories).flat();
-  const uniqueMovies = Array.from(new Map(allMovies.map(item => [item.id, item])).values());
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const res = await fetch('/api/movies');
+        const data = await res.json();
+        setMovies(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMovies();
+  }, []);
 
-  const results = uniqueMovies.filter(m => 
+  const results = movies.filter(m => 
     m.title.toLowerCase().includes(q.toLowerCase()) || 
     m.categories.some(c => c.toLowerCase().includes(q.toLowerCase()))
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 w-full">
+        <Loader2 className="w-10 h-10 text-brand-red animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 w-full">

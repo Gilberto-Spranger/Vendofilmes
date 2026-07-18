@@ -21,6 +21,7 @@ export async function POST(req: Request) {
       description: data.description,
       thumbnailUrl: data.thumbnailUrl,
       bannerUrl: data.bannerUrl,
+      videoUrl: data.videoUrl, // Add this
       duration: data.duration,
       year: parseInt(data.year),
       rating: data.rating,

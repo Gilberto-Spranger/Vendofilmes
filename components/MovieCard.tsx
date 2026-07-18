@@ -86,17 +86,17 @@ export default function MovieCard({ movie }: { movie: Movie }) {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#111] to-transparent z-10"></div>
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center">
-                  <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/50 transform scale-50 group-hover:scale-100 transition-transform duration-300">
+                  <Link href={`/assistir/${movie.id}`} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/50 transform scale-50 group-hover:scale-100 transition-transform duration-300">
                     <Play className="w-5 h-5 fill-white text-white ml-0.5" />
-                  </div>
+                  </Link>
                 </div>
             </div>
             <div className="p-5 space-y-4 relative z-20 bg-[#111] -mt-4">
               <div className="flex items-center justify-between">
                 <div className="flex gap-2">
-                  <button className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:scale-110 transition-transform">
+                  <Link href={`/assistir/${movie.id}`} className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:scale-110 transition-transform">
                     <Play className="w-4 h-4 fill-black text-black ml-0.5" />
-                  </button>
+                  </Link>
                   <button className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center hover:border-white hover:bg-white/10 transition-colors bg-white/5">
                     <Plus className="w-4 h-4 text-white" />
                   </button>

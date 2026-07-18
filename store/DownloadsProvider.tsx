@@ -5,7 +5,7 @@ import { Movie } from '@/types';
 type DownloadsContextType = {
   downloads: Movie[];
   addDownload: (movie: Movie) => void;
-  removeDownload: (movieId: string) => void;
+  removeDownload: (movieId: number) => void;
   storageUsed: number;
   storageTotal: number;
 };
@@ -35,7 +35,7 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const removeDownload = (movieId: string) => {
+  const removeDownload = (movieId: number) => {
     const newDownloads = downloads.filter(d => d.id !== movieId);
     setDownloads(newDownloads);
     localStorage.setItem('vendofilmes_downloads', JSON.stringify(newDownloads));

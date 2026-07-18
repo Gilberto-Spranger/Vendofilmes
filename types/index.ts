@@ -1,10 +1,10 @@
 export interface Movie {
-  id: string;
+  id: number;
   title: string;
   description: string;
   thumbnailUrl: string;
   bannerUrl: string;
-  videoUrl?: string;
+  videoUrl?: string | null;
   duration: string;
   year: number;
   rating: string;

@@ -1,14 +1,39 @@
 'use client';
-import { Wallet, ArrowUpRight, ArrowDownRight, CreditCard, History, Plus } from 'lucide-react';
+import { Wallet, ArrowUpRight, ArrowDownRight, CreditCard, History, Plus, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useState } from 'react';
 
 export default function CarteiraPage() {
+  const [loading, setLoading] = useState(false);
+
   const transactions = [
     { id: 1, type: 'deposit', amount: 50.00, date: '15 Jul, 2026', status: 'Concluído' },
     { id: 2, type: 'payment', amount: 39.90, date: '10 Jul, 2026', status: 'Concluído', desc: 'Assinatura Premium' },
     { id: 3, type: 'payment', amount: 15.90, date: '05 Jul, 2026', status: 'Concluído', desc: 'Aluguel de Filme' },
     { id: 4, type: 'deposit', amount: 100.00, date: '01 Jul, 2026', status: 'Concluído' },
   ];
+
+  const handleDeposit = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: 'price_mock_deposit', isSubscription: false }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Erro ao iniciar depósito.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao iniciar depósito.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col px-4 lg:px-8 py-8 relative w-full min-h-[calc(100vh-80px)]">
@@ -29,8 +54,13 @@ export default function CarteiraPage() {
               <p className="text-sm text-brand-text-muted font-bold tracking-widest uppercase mb-2 relative z-10">Saldo Disponível</p>
               <h2 className="text-5xl font-black text-white mb-8 relative z-10">R$ 42<span className="text-2xl text-white/50">,90</span></h2>
               
-              <button className="w-full py-4 bg-brand-green text-white font-black rounded-xl hover:bg-brand-green/80 transition-colors shadow-lg flex items-center justify-center gap-3 relative z-10">
-                <Plus className="w-5 h-5" /> Adicionar Saldo
+              <button 
+                onClick={handleDeposit}
+                disabled={loading}
+                className="w-full py-4 bg-brand-green text-white font-black rounded-xl hover:bg-brand-green/80 transition-colors shadow-lg flex items-center justify-center gap-3 relative z-10 disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />} 
+                {loading ? 'Redirecionando...' : 'Adicionar Saldo'}
               </button>
             </motion.div>
 

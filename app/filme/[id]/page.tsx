@@ -1,19 +1,27 @@
-import { getMovieById } from '@/lib/data';
+import { db } from '@/src/db';
+import { movies } from '@/src/db/schema';
+import { eq } from 'drizzle-orm';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Play, Plus, ThumbsUp, Share2, ChevronLeft, Download } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import MovieRow from '@/components/MovieRow';
-import { movieCategories } from '@/lib/data';
 import Footer from '@/components/Footer';
+import MovieActions from './MovieActions';
+
+export const dynamic = 'force-dynamic';
 
 export default async function MovieDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  const movie = getMovieById(resolvedParams.id);
+  
+  const movieData = await db.select().from(movies).where(eq(movies.id, parseInt(resolvedParams.id)));
+  const movie = movieData[0];
 
   if (!movie) {
     notFound();
   }
+
+  const allMovies = await db.select().from(movies);
 
   return (
     <div className="flex-1 flex flex-col relative w-full bg-brand-bg min-h-screen">
@@ -71,25 +79,7 @@ export default async function MovieDetailsPage({ params }: { params: Promise<{ i
             {movie.description}
           </p>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <button className="px-8 py-4 bg-white text-black font-black rounded-xl flex items-center gap-3 hover:scale-105 transition-all shadow-[0_0_30px_rgba(255,255,255,0.3)]">
-              <Play className="w-5 h-5 fill-black" />
-              ASSISTIR AGORA
-            </button>
-            <button className="px-6 py-4 bg-brand-card/80 backdrop-blur-xl border border-white/10 text-white font-bold rounded-xl flex items-center gap-3 hover:bg-white/10 hover:border-white/30 transition-all">
-              <Download className="w-5 h-5" />
-              BAIXAR
-            </button>
-            <button className="w-14 h-14 flex items-center justify-center bg-brand-card/80 backdrop-blur-xl border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-white/30 transition-all">
-              <Plus className="w-6 h-6" />
-            </button>
-            <button className="w-14 h-14 flex items-center justify-center bg-brand-card/80 backdrop-blur-xl border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-white/30 transition-all">
-              <ThumbsUp className="w-5 h-5" />
-            </button>
-            <button className="w-14 h-14 flex items-center justify-center bg-brand-card/80 backdrop-blur-xl border border-white/10 text-white rounded-xl hover:bg-white/10 hover:border-white/30 transition-all">
-              <Share2 className="w-5 h-5" />
-            </button>
-          </div>
+          <MovieActions movie={movie} />
         </div>
       </div>
 
@@ -130,7 +120,7 @@ export default async function MovieDetailsPage({ params }: { params: Promise<{ i
           </div>
         </div>
 
-        <MovieRow title="Títulos Semelhantes" movies={movieCategories.novidades} />
+        <MovieRow title="Títulos Semelhantes" movies={allMovies.filter(m => m.id !== movie.id).slice(0, 5)} />
       </div>
       
       <Footer />

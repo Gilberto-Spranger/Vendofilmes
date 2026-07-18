@@ -1,9 +1,29 @@
-import { movieCategories } from '@/lib/data';
 import MovieCard from '@/components/MovieCard';
+import { db } from '@/src/db';
+import { userMoviesHistory, movies, users } from '@/src/db/schema';
+import { eq, desc } from 'drizzle-orm';
 
-export default function HistoricoPage() {
-  // Mocking user's history
-  const movies = [...movieCategories.populares.slice(0, 4)];
+export const dynamic = 'force-dynamic';
+
+export default async function HistoricoPage() {
+  const existingUsers = await db.select().from(users).limit(1);
+  const userId = existingUsers.length > 0 ? existingUsers[0].id : null;
+  
+  let userMovies: any[] = [];
+  
+  if (userId) {
+    const history = await db.select({
+      movie: movies
+    })
+    .from(userMoviesHistory)
+    .innerJoin(movies, eq(userMoviesHistory.movieId, movies.id))
+    .where(eq(userMoviesHistory.userId, userId))
+    .orderBy(desc(userMoviesHistory.watchedAt));
+    
+    // remove duplicates keeping most recent
+    const uniqueMovies = Array.from(new Map(history.map(item => [item.movie.id, item.movie])).values());
+    userMovies = uniqueMovies;
+  }
   
   return (
     <div className="flex-1 flex flex-col px-4 lg:px-8 py-8 relative w-full min-h-[calc(100vh-80px)]">
@@ -12,9 +32,9 @@ export default function HistoricoPage() {
         <p className="text-brand-text-muted mt-2">Títulos que você assistiu recentemente.</p>
       </div>
       
-      {movies.length > 0 ? (
+      {userMovies.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pb-20">
-          {movies.map((movie) => (
+          {userMovies.map((movie) => (
             <div key={movie.id} className="w-full flex justify-center opacity-80 hover:opacity-100 transition-opacity grayscale-[30%] hover:grayscale-0">
               <MovieCard movie={movie} />
             </div>

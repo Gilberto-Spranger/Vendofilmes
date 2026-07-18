@@ -1,4 +1,6 @@
-import MovieCard from '@/components/MovieCard';
+const fs = require('fs');
+
+const generatePage = (title, description, filterLogic) => `import MovieCard from '@/components/MovieCard';
 import { db } from '@/src/db';
 import { movies } from '@/src/db/schema';
 import { desc } from 'drizzle-orm';
@@ -7,13 +9,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   const allMovies = await db.select().from(movies).orderBy(desc(movies.createdAt));
-  const filteredMovies = allMovies.filter(m => m.categories.map(c => c.toLowerCase()).includes("documentário"));
+  const filteredMovies = ${filterLogic};
   
   return (
     <div className="flex-1 flex flex-col px-4 lg:px-8 py-8 relative w-full">
       <div className="mb-8">
-        <h1 className="text-4xl font-black text-white tracking-tighter">Documentários</h1>
-        <p className="text-brand-text-muted mt-2">Explore os melhores documentários do nosso catálogo.</p>
+        <h1 className="text-4xl font-black text-white tracking-tighter">${title}</h1>
+        <p className="text-brand-text-muted mt-2">${description}</p>
       </div>
       
       {filteredMovies.length === 0 ? (
@@ -32,3 +34,9 @@ export default async function Page() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('app/filmes/page.tsx', generatePage('Filmes', 'Explore os melhores filmes do nosso catálogo.', 'allMovies.filter(m => m.categories.map(c => c.toLowerCase()).includes("filme") || m.categories.length === 0)'));
+fs.writeFileSync('app/series/page.tsx', generatePage('Séries', 'Explore as melhores séries do nosso catálogo.', 'allMovies.filter(m => m.categories.map(c => c.toLowerCase()).includes("série"))'));
+fs.writeFileSync('app/documentarios/page.tsx', generatePage('Documentários', 'Explore os melhores documentários do nosso catálogo.', 'allMovies.filter(m => m.categories.map(c => c.toLowerCase()).includes("documentário"))'));
+
