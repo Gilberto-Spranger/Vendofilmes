@@ -13,21 +13,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ url: '/carteira?success=true&mock=true' });
     }
 
+    const isRealSubscription = isSubscription && priceId && priceId.startsWith('price_');
+
+    const lineItems = isRealSubscription 
+      ? [{ price: priceId, quantity: 1 }]
+      : [
+          {
+            price_data: {
+              currency: 'brl',
+              product_data: {
+                name: name || 'Assinatura VendoFilmes',
+              },
+              unit_amount: amount ? amount * 100 : 3990, // in cents
+            },
+            quantity: 1,
+          },
+        ];
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'brl',
-            product_data: {
-              name: name || 'Assinatura VendoFilmes',
-            },
-            unit_amount: amount ? amount * 100 : 3990, // in cents
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
+      line_items: lineItems,
+      mode: isRealSubscription ? 'subscription' : 'payment',
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/carteira?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/carteira?canceled=true`,
     });

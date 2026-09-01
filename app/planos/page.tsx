@@ -1,10 +1,13 @@
 'use client';
-import { CreditCard, CheckCircle2, Zap, Shield, Sparkles } from 'lucide-react';
-import { motion } from 'motion/react';
+import { CreditCard, CheckCircle2, Zap, Shield, Sparkles, Smartphone, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 
 export default function PlanosPage() {
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+  const [appyPayPlan, setAppyPayPlan] = useState<any | null>(null);
+  const [phone, setPhone] = useState('');
+  const [isProcessingAppyPay, setIsProcessingAppyPay] = useState(false);
 
   const plans = [
     {
@@ -44,6 +47,37 @@ export default function PlanosPage() {
       priceId: 'price_mock_family',
     }
   ];
+
+  const handleAppyPaySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!appyPayPlan || !phone) return;
+    setIsProcessingAppyPay(true);
+
+    try {
+      const res = await fetch('/api/appypay/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          planId: appyPayPlan.id, 
+          amount: parseFloat(appyPayPlan.price.replace(',', '.')),
+          name: `Plano ${appyPayPlan.name}`,
+          phone: phone
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message || 'Pagamento iniciado! Confira seu telemóvel.');
+        setAppyPayPlan(null);
+      } else {
+        alert(data.error || 'Erro ao processar Appy Pay.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao processar Appy Pay.');
+    } finally {
+      setIsProcessingAppyPay(false);
+    }
+  };
 
   const handleSubscribe = async (plan: any) => {
     setLoadingPlanId(plan.id);
@@ -116,7 +150,7 @@ export default function PlanosPage() {
               <button 
                 onClick={() => handleSubscribe(plan)}
                 disabled={loadingPlanId === plan.id}
-                className={`w-full py-4 rounded-xl font-black transition-all flex items-center justify-center gap-2 ${
+                className={`w-full py-4 rounded-xl font-black transition-all flex items-center justify-center gap-2 mb-3 ${
                   plan.isCurrent 
                   ? 'bg-white/10 text-white border border-white/20 cursor-default' 
                   : 'bg-white text-black hover:bg-gray-200 shadow-xl'
@@ -124,6 +158,15 @@ export default function PlanosPage() {
               >
                 {loadingPlanId === plan.id ? 'Redirecionando...' : plan.buttonText}
               </button>
+
+              {!plan.isCurrent && (
+                <button
+                  onClick={() => setAppyPayPlan(plan)}
+                  className="w-full py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-[#F68A1E]/10 text-[#F68A1E] border border-[#F68A1E]/30 hover:bg-[#F68A1E] hover:text-white"
+                >
+                  <Smartphone className="w-4 h-4" /> Multicaixa Express (AppyPay)
+                </button>
+              )}
             </motion.div>
           ))}
         </div>
@@ -139,8 +182,8 @@ export default function PlanosPage() {
               <Shield className="w-8 h-8 text-[#635BFF]" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white mb-2">Faturamento via Stripe</h3>
-              <p className="text-brand-text-muted text-sm mb-6">Todos os pagamentos são processados com segurança pelo Stripe. Nós não armazenamos os dados do seu cartão. Caso deseje cancelar, gerencie as preferências diretamente no portal do cliente.</p>
+              <h3 className="text-xl font-bold text-white mb-2">Faturamento via Stripe & AppPay</h3>
+              <p className="text-brand-text-muted text-sm mb-6">Todos os pagamentos são processados com segurança pelo Stripe, com suporte completo a Apple Pay, Google Pay e todos os cartões, ou de forma local via Multicaixa Express e Unitel Money (AppyPay). Nós não armazenamos os dados de pagamento. Caso deseje cancelar, gerencie as preferências diretamente no portal do cliente.</p>
               <button className="px-6 py-3 bg-[#635BFF] text-white font-bold rounded-xl hover:bg-[#635BFF]/80 transition-colors flex items-center gap-2">
                 <CreditCard className="w-5 h-5" /> Portal do Cliente (Stripe)
               </button>
@@ -148,6 +191,75 @@ export default function PlanosPage() {
           </div>
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {appyPayPlan && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-brand-card border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl relative"
+            >
+              <button 
+                onClick={() => setAppyPayPlan(null)}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-white/5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-[#F68A1E]/10 flex items-center justify-center">
+                  <Smartphone className="w-6 h-6 text-[#F68A1E]" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-white">Appy Pay Angola</h3>
+                  <p className="text-sm text-brand-text-muted">Multicaixa Express</p>
+                </div>
+              </div>
+
+              <div className="mb-6 p-4 bg-white/5 rounded-xl border border-white/10">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-brand-text-muted">Plano selecionado</span>
+                  <span className="font-bold text-white">{appyPayPlan.name}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-brand-text-muted">Total a pagar</span>
+                  <span className="font-black text-brand-green text-lg">R$ {appyPayPlan.price}</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleAppyPaySubmit}>
+                <div className="mb-6">
+                  <label className="block text-xs font-bold text-brand-text-muted uppercase tracking-wider mb-2">
+                    Número de Telemóvel (Multicaixa)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 font-bold">+244</span>
+                    <input 
+                      required 
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="9XX XXX XXX" 
+                      className="w-full pl-16 pr-4 py-3 bg-brand-bg border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#F68A1E] transition-colors"
+                    />
+                  </div>
+                  <p className="text-xs text-brand-text-muted mt-2">Você receberá uma notificação no app Multicaixa Express para confirmar o pagamento.</p>
+                </div>
+
+                <button 
+                  type="submit" 
+                  disabled={isProcessingAppyPay}
+                  className="w-full py-4 bg-[#F68A1E] text-white font-black rounded-xl hover:bg-[#F68A1E]/80 transition-colors shadow-lg disabled:opacity-50"
+                >
+                  {isProcessingAppyPay ? 'A Processar...' : 'Pagar com Multicaixa Express'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

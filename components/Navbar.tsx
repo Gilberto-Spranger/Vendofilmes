@@ -5,13 +5,35 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, Bell, Menu, User, Wallet, CreditCard, LogOut, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { firestore } from '@/lib/firebase';
+import { collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<any[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    // Listen to real-time notifications from Firestore
+    try {
+      const q = query(collection(firestore, 'notifications'), orderBy('createdAt', 'desc'), limit(5));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const notifs: any[] = [];
+        snapshot.forEach((doc) => {
+          notifs.push({ id: doc.id, ...doc.data() });
+        });
+        setNotifications(notifs);
+      });
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Error setting up notifications listener:", error);
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,6 +51,9 @@ export default function Navbar() {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -62,16 +87,47 @@ export default function Navbar() {
         <Search className="w-4 h-4 absolute left-5 top-3.5 opacity-40 text-white transition-opacity group-focus-within:opacity-100" />
       </form>
 
-      <div className="flex items-center gap-6 relative" ref={dropdownRef}>
-        <div className="relative cursor-pointer hover:opacity-80 transition-opacity">
-          <Bell className="w-5 h-5 opacity-60 text-white" />
-          <div className="absolute -top-1 -right-1 w-2 h-2 bg-brand-red rounded-full"></div>
+      <div className="flex items-center gap-6 relative">
+        <div className="relative" ref={notifRef}>
+          <div className="relative cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}>
+            <Bell className="w-5 h-5 opacity-60 text-white" />
+            {notifications.length > 0 && <div className="absolute -top-1 -right-1 w-2 h-2 bg-brand-red rounded-full"></div>}
+          </div>
+          <AnimatePresence>
+            {isNotificationsOpen && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-10 -right-4 w-72 bg-brand-card border border-white/10 rounded-2xl shadow-2xl overflow-hidden py-2"
+              >
+                <div className="px-4 py-3 border-b border-white/5 mb-2 flex items-center justify-between">
+                  <span className="block text-sm font-bold text-white">Notificações</span>
+                  {notifications.length > 0 && <span className="bg-brand-red text-white text-[10px] px-2 py-0.5 rounded-full">{notifications.length}</span>}
+                </div>
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-6 text-center">
+                    <p className="text-xs text-brand-text-muted">Nenhuma notificação no momento.</p>
+                  </div>
+                ) : (
+                  notifications.map(notif => (
+                    <div key={notif.id} className="px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer border-b border-white/5">
+                      <p className="text-sm text-white font-medium mb-1">{notif.title}</p>
+                      <p className="text-xs text-brand-text-muted">{notif.message}</p>
+                    </div>
+                  ))
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
         
-        <div 
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="flex items-center gap-3 bg-brand-card py-1.5 pl-1.5 pr-4 rounded-full border border-white/10 cursor-pointer hover:border-brand-red/30 transition-colors"
-        >
+        <div className="relative" ref={dropdownRef}>
+          <div 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex items-center gap-3 bg-brand-card py-1.5 pl-1.5 pr-4 rounded-full border border-white/10 cursor-pointer hover:border-brand-red/30 transition-colors"
+          >
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-red to-brand-green flex items-center justify-center text-[10px] font-bold text-white">
             JD
           </div>
@@ -116,6 +172,7 @@ export default function Navbar() {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </header>
   );

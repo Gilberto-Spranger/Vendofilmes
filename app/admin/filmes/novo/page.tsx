@@ -30,9 +30,22 @@ export default function AddMoviePage() {
   });
 
   const uploadFile = async (file: File, path: string) => {
-    const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    return getDownloadURL(snapshot.ref);
+    try {
+      const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      return await getDownloadURL(snapshot.ref);
+    } catch (error: any) {
+      console.error('Firebase Storage Error:', error);
+      if (error.code === 'storage/retry-limit-exceeded' || error.code === 'storage/unauthorized') {
+        alert('Erro no Firebase Storage: Sem permissão ou bucket não configurado. Uma URL de demonstração será usada.');
+      } else {
+        alert(`Erro de upload: ${error.message}. Usando URL de demonstração.`);
+      }
+      // Fallback URLs based on path
+      if (path === 'videos') return 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+      if (path === 'banners') return 'https://picsum.photos/seed/banner/1920/1080';
+      return 'https://picsum.photos/seed/thumb/400/600';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
